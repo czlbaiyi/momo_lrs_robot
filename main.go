@@ -95,7 +95,7 @@ func readStartPram() {
 		if err != nil {
 			log.Fatalln("robotNum 解析失败 ", err)
 		}
-		log.Println("压力测试", "add:", add, "roomType", roomCount, "robotNum", robotNum)
+		log.Println("匹配测试", "add:", add, "roomType", roomType, "robotNum", robotNum)
 	} else {
 		log.Fatalln(`配置表机器人启动类型参数错误 请检查`)
 	}
@@ -127,6 +127,7 @@ func readConfig() {
 		log.Println("配置文件内容为：", conf)
 	}
 
+	robot.LogType = conf.LogType
 	add = conf.Adds[conf.AddIdx]
 }
 
