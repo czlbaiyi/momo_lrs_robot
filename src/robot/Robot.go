@@ -232,8 +232,8 @@ func CreateRobotStressTest(romeType int, newAdd string, roomRobotCount int) {
 }
 
 // QuickLoginTest 快速登录
-func QuickLoginTest(roomType int, add string) {
-	reqFullPath := add
+func QuickLoginTest(roomType int, quickHTTPAdd string) {
+	reqFullPath := quickHTTPAdd
 	reqFullPath += `?lg=0&la=0&roomType=1&sessionId=`
 	reqFullPath += GenerationMomoID()
 	log.Println(reqFullPath)
@@ -254,40 +254,20 @@ func QuickLoginTest(roomType int, add string) {
 	if err1 != nil {
 		log.Println("消息解析失败", err1)
 	} else {
+		tcpAdd := ret.Host
+		tcpAdd += ":"
+		tcpAdd += strconv.Itoa(ret.Port)
 		if ret.RoomID > 0 {
 			//跟随房间
 			log.Println("跟随房间")
-			CreateRobotFollowRoom(ret.RoomID, add)
+			CreateRobotFollowRoom(ret.RoomID, tcpAdd)
 		} else {
 			//创建房间
 			log.Println("创建房间")
-			tcpAdd := ret.Host
-			tcpAdd += ":"
-			tcpAdd += strconv.Itoa(ret.Port)
 			CreateRobotStressTest(roomType, tcpAdd, 1)
 		}
 	}
 }
-
-// func QuickLoginTest(roomType int, add string) {
-// 	quikLoginModule := &QuikLoginModule{"0", "0", 1, GenerationMomoID()}
-// 	buf := quikLoginModule.Serialize()
-// 	pram := string(buf)
-// 	log.Println(pram)
-// 	resp, err := http.Post(add,
-// 		"text/plain",
-// 		strings.NewReader(pram))
-// 	if err != nil {
-// 		fmt.Println(err)
-// 	}
-// 	defer resp.Body.Close()
-// 	body, err := ioutil.ReadAll(resp.Body)
-// 	if err != nil {
-// 		log.Println("请求错误，add", add)
-// 	}
-
-// 	fmt.Println(string(body))
-// }
 
 //RunRobotsLogic 游戏逻辑开启
 func RunRobotsLogic() {
