@@ -1,5 +1,8 @@
 {
-    "Adds":["127.0.0.1:11111","127.0.0.1:11111","127.0.0.1:11111"],
-    "AddIdx":1,
-    "LogType":0
+    "Adds":["172.16.73.9:11111","123.56.221.98:11111","https://lrs.immomogame.com/wolfcenter/login/quickLogin","http://172.16.72.52:8080/wolfcenter/login/quickLogin"],
+    "AddIdx":0,
+    "RobotType":1,
+    "RobotTypeDes":"0:普通机器人模式，1:压力测试机器人模式，2:快速匹配测试模式",
+    "LogType":1,
+    "LogTypeDes":"0：全日志模式，1:关键日志模式"
 }

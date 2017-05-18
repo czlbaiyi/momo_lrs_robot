@@ -2,9 +2,10 @@ package robot
 
 //Config connect ip and port
 type Config struct {
-	Adds    []string
-	AddIdx  int
-	LogType int //0显示所有日志 1显示关键日志
+	Adds      []string
+	AddIdx    int
+	RobotType int //"0:普通机器人模式，1:压力测试机器人模式，2:快速匹配测试模式",
+	LogType   int //0显示所有日志 1显示关键日志
 }
 
 var nameList = []string{

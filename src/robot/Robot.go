@@ -2,11 +2,16 @@ package robot
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
 	"sync"
+
+	"strconv"
 
 	"github.com/robfig/cron"
 )
@@ -29,11 +34,11 @@ type Robot struct {
 	roomPlayerCount    int
 }
 
-var add string
+//LogType 0全日志 //1关键日志
+var LogType = 0
 var robots = [](*Robot){}
 var timer *cron.Cron
-var logType = 1 //0全日志 //1关键日志
-var robotAddLock *sync.RWMutex = new(sync.RWMutex)
+var robotAddLock = new(sync.RWMutex)
 
 func (r *Robot) init() {
 	r.isConnSucessRWLock = new(sync.RWMutex)
@@ -60,7 +65,7 @@ func (r *Robot) readMsg() {
 				return
 			}
 		default:
-			if logType == 0 {
+			if LogType == 0 {
 				fmt.Print(".")
 			}
 		}
@@ -188,45 +193,101 @@ func createNewRobots() *Robot {
 	return r
 }
 
-//CreateRobot 创建机器人
-func CreateRobot(newRoomID int, newAdd string) *Robot {
-	add = newAdd
+//CreateRobotFollowRoom 跟随房间 创建机器人
+func CreateRobotFollowRoom(newRoomID int, newAdd string) {
 	r := createNewRobots()
-	r.add = add
+	r.add = newAdd
 	r.roomID = newRoomID
 	var err error
-	r.conn, err = net.Dial("tcp", add)
+	r.conn, err = net.Dial("tcp", r.add)
 	if err != nil {
 		panic(err)
 	}
-	if logType == 0 {
-		log.Println("连接服务器地址：", add)
+	if LogType == 0 {
+		log.Println("连接服务器地址：", r.add)
 	}
 	r.isConnSucess = true
 	go r.readMsg()
 	go r.authAndJoinRoom(newRoomID)
-	return r
+	return
 }
 
-//CreateRobotStressTest 创建机器人
-func CreateRobotStressTest(romeType int, newAdd string, roomRobotCount int) *Robot {
-	add = newAdd
+//CreateRobotStressTest 创建房间 然后根据参数创建机器人
+func CreateRobotStressTest(romeType int, newAdd string, roomRobotCount int) {
 	r := createNewRobots()
-	r.add = add
+	r.add = newAdd
 	r.roomRobotCount = roomRobotCount
 	var err error
-	r.conn, err = net.Dial("tcp", add)
+	r.conn, err = net.Dial("tcp", r.add)
 	if err != nil {
 		panic(err)
 	}
-	if logType == 0 {
-		log.Println("连接服务器地址：", add)
+	if LogType == 0 {
+		log.Println("连接服务器地址：", r.add)
 	}
 	r.isConnSucess = true
 	go r.readMsg()
 	go r.authAndCreateRoom(romeType)
-	return r
+	return
 }
+
+// QuickLoginTest 快速登录
+func QuickLoginTest(roomType int, add string) {
+	reqFullPath := add
+	reqFullPath += `?lg=0&la=0&roomType=1&sessionId=`
+	reqFullPath += GenerationMomoID()
+	log.Println(reqFullPath)
+	resp, err := http.Get(reqFullPath)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("请求错误，reqFullPath", reqFullPath)
+	}
+	if LogType == 0 {
+		log.Println(string(body))
+	}
+	ret := &QuickLoginRetModule{}
+	err1 := json.Unmarshal(body, &ret)
+	if err1 != nil {
+		log.Println("消息解析失败", err1)
+	} else {
+		if ret.RoomID > 0 {
+			//跟随房间
+			log.Println("跟随房间")
+			CreateRobotFollowRoom(ret.RoomID, add)
+		} else {
+			//创建房间
+			log.Println("创建房间")
+			tcpAdd := ret.Host
+			tcpAdd += ":"
+			tcpAdd += strconv.Itoa(ret.Port)
+			CreateRobotStressTest(roomType, tcpAdd, 1)
+		}
+	}
+}
+
+// func QuickLoginTest(roomType int, add string) {
+// 	quikLoginModule := &QuikLoginModule{"0", "0", 1, GenerationMomoID()}
+// 	buf := quikLoginModule.Serialize()
+// 	pram := string(buf)
+// 	log.Println(pram)
+// 	resp, err := http.Post(add,
+// 		"text/plain",
+// 		strings.NewReader(pram))
+// 	if err != nil {
+// 		fmt.Println(err)
+// 	}
+// 	defer resp.Body.Close()
+// 	body, err := ioutil.ReadAll(resp.Body)
+// 	if err != nil {
+// 		log.Println("请求错误，add", add)
+// 	}
+
+// 	fmt.Println(string(body))
+// }
 
 //RunRobotsLogic 游戏逻辑开启
 func RunRobotsLogic() {

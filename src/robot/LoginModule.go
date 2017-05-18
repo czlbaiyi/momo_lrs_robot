@@ -32,7 +32,8 @@ func (m *loginModule) Serialize() []byte {
 
 var currentIdx = 0
 
-func robotLoginPacketGeneration() *loginModule {
+// GenerationMomoID 生成陌陌Id
+func GenerationMomoID() string {
 	currentIdx++
 	timeN := time.Now().UnixNano()
 	r := rand.New(rand.NewSource(timeN))
@@ -41,6 +42,11 @@ func robotLoginPacketGeneration() *loginModule {
 		momoID += strconv.Itoa(int(r.Intn(10)))
 	}
 	momoID += strconv.Itoa(currentIdx)
+	return momoID
+}
+
+func robotLoginPacketGeneration() *loginModule {
+	momoID := GenerationMomoID()
 	var nameValue = nameList[currentIdx%len(nameList)]
 
 	var headIconValue = headIconList[currentIdx%len(headIconList)]

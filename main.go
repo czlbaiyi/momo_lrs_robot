@@ -15,77 +15,92 @@ import (
 	"time"
 )
 
-var robotType int // 0普通机器人模式 1 压力测试机器人模式
-var conf *robot.Config
-var roomID int
-var roomType int
-var roomCount int
-var robotNum int
-var add string
+var (
+	roomID                  int
+	roomType                int
+	roomStartGameRobotCount int
+	roomCount               int
+	robotNum                int
+	add                     string
+	conf                    *robot.Config
+)
 
 func readStartPram() {
-	log.Println(`启动参数提示,
-		启动格式1(1个参数，默认启动20个机器人): " ./robot 房间号" 
-			示例: "./robot 10000"
-		启动格式2(2个参数): "./robot 房间号 机器人数"
-			示例:"./robot 10000 18"
-		启动格式3(3参数): " ./robot add 房间类型 房间数 房间机器人数目" 
-			示例: ”./robot 127.0.0.1:11111 1 10000 20“
-		`)
 	lenth := len(os.Args)
 	var err error
-	if lenth == 3 {
-		param2 := os.Args[1]
-		roomID, err = strconv.Atoi(param2)
-		if err != nil {
-			log.Println("roomID 解析失败 ", err)
-		}
+	if conf.RobotType == 0 {
+		if lenth == 3 {
+			param1 := os.Args[1]
+			roomID, err = strconv.Atoi(param1)
+			if err != nil {
+				log.Fatalln("roomID 解析失败 ", err)
+			}
 
-		param1 := os.Args[2]
-		robotNum, err = strconv.Atoi(param1)
-		if err != nil {
-			log.Println("robotNum 解析失败 ", err)
+			param2 := os.Args[2]
+			robotNum, err = strconv.Atoi(param2)
+			if err != nil {
+				log.Fatalln("robotNum 解析失败 ", err)
+			}
+			log.Println("进入房间", "roomID", roomID, "robotNum", robotNum)
+		} else if lenth == 2 {
+			param2 := os.Args[1]
+			roomID, err = strconv.Atoi(param2)
+			if err != nil {
+				log.Fatalln("roomId 解析失败 ", err)
+			}
+			robotNum = 20
+			log.Println("进入房间", "roomID", roomID, "robotNum", robotNum)
+		} else {
+			log.Fatalln(`启动参数错误 请检查`)
 		}
-		robotType = 0
-		log.Println("进入房间", roomID, robotNum)
-		log.Println("进入房间", "roomID", roomID, "robotNum", robotNum)
-	} else if lenth == 2 {
-		param2 := os.Args[1]
-		roomID, err = strconv.Atoi(param2)
-		if err != nil {
-			log.Println("roomId 解析失败 ", err)
+	} else if conf.RobotType == 1 {
+		if lenth == 5 {
+			param1 := os.Args[1]
+			roomType, err = strconv.Atoi(param1)
+			if err != nil {
+				log.Fatalln("roomType 解析失败 ", err)
+			}
+
+			param2 := os.Args[2]
+			roomStartGameRobotCount, err = strconv.Atoi(param2)
+			if err != nil {
+				log.Fatalln("roomStartGameRobotCount 解析失败 ", err)
+			}
+
+			param3 := os.Args[3]
+			roomCount, err = strconv.Atoi(param3)
+			if err != nil {
+				log.Fatalln("roomCount 解析失败 ", err)
+			}
+
+			param4 := os.Args[4]
+			robotNum, err = strconv.Atoi(param4)
+			if err != nil {
+				log.Fatalln("robotNum 解析失败 ", err)
+			}
+
+			if roomCount < roomStartGameRobotCount {
+				log.Fatalln("房间人数不可以比开房间需要的人数少 ", err)
+			}
+			log.Println("压力测试", "add:", add, "roomCount", roomCount, "robotNum", robotNum)
+		} else {
+			log.Fatalln(`启动参数错误 请检查`)
 		}
-		robotNum = 20
-		robotType = 0
-		log.Println("进入房间", "roomID", roomID, "robotNum", robotNum)
-	} else if lenth == 5 {
-		add = os.Args[1]
+	} else if conf.RobotType == 2 {
+		param1 := os.Args[1]
+		roomType, err = strconv.Atoi(param1)
+		if err != nil {
+			log.Fatalln("roomType 解析失败 ", err)
+		}
 
 		param2 := os.Args[2]
-		roomType, err = strconv.Atoi(param2)
+		robotNum, err = strconv.Atoi(param2)
 		if err != nil {
-			log.Println("roomType 解析失败 ", err)
+			log.Fatalln("robotNum 解析失败 ", err)
 		}
-
-		param3 := os.Args[3]
-		roomCount, err = strconv.Atoi(param3)
-		if err != nil {
-			log.Println("roomCount 解析失败 ", err)
-		}
-		if roomCount <= 0 {
-			roomCount = 1
-			log.Println("roomCount 不可以比开房间需要的人数少 ", err)
-		}
-
-		param4 := os.Args[4]
-		robotNum, err = strconv.Atoi(param4)
-		if err != nil {
-			log.Println("robotNum 解析失败 ", err)
-		}
-		robotType = 1
-		log.Println("压力测试", "add:", add, "roomCount", roomCount, "robotNum", robotNum)
+		log.Println("压力测试", "add:", add, "roomType", roomCount, "robotNum", robotNum)
 	} else {
-		log.Fatalln(`启动参数错误 请检查`)
+		log.Fatalln(`配置表机器人启动类型参数错误 请检查`)
 	}
 }
 
@@ -139,21 +154,29 @@ func main() {
 	readConfig()
 	readStartPram()
 	unlimitSocket()
-	if robotType == 0 {
+	if conf.RobotType == 0 {
 		log.Println("本次启动为普通进入房间 开始创建机器人 ")
-	} else {
+	} else if conf.RobotType == 1 {
 		log.Println("本次启动为压力测试 开始创建机器人 ")
+	} else if conf.RobotType == 2 {
+		log.Println("本次启动快速匹配测试 开始创建机器人 ")
 	}
+
 	time.Sleep(1 * time.Second)
-	if robotType == 0 {
+	if conf.RobotType == 0 {
 		for i := 0; i < robotNum; i++ {
 			log.Println("创建机器人 ", i+1)
-			_ = robot.CreateRobot(roomID, add)
+			robot.CreateRobotFollowRoom(roomID, add)
 		}
-	} else if robotType == 1 {
+	} else if conf.RobotType == 1 {
 		for i := 0; i < roomCount; i++ {
 			log.Println("创建房间 ", i+1)
-			_ = robot.CreateRobotStressTest(roomType, add, robotNum)
+			robot.CreateRobotStressTest(roomType, add, robotNum)
+		}
+	} else if conf.RobotType == 2 {
+		for i := 0; i < robotNum; i++ {
+			log.Println("快速进入 ", i+1)
+			robot.QuickLoginTest(roomType, add)
 		}
 	}
 	robot.RunRobotsLogic()

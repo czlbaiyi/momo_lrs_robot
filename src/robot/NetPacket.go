@@ -61,7 +61,7 @@ func (p *Packet) Serialize() []byte {
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.BigEndian, p.Header)
 	binary.Write(buf, binary.BigEndian, body)
-	if logType == 0 {
+	if LogType == 0 {
 		fmt.Println("Send MsgModuleID", p.Header.MsgModuleID, "Send MsgFunctionID", p.Header.MsgFunctionID, "body", p.IPacketModle)
 	}
 	return buf.Bytes()
@@ -77,7 +77,7 @@ func (r *Robot) unpacket(buf []byte) {
 	if serverError {
 		log.Println("服务器内部错误")
 	} else {
-		if logType == 0 {
+		if LogType == 0 {
 			if header.MsgModuleID == 5 && header.MsgFunctionID == 1 {
 				log.Print(".")
 			} else {
@@ -92,12 +92,12 @@ func (r *Robot) unpacket(buf []byte) {
 			if err != nil {
 				log.Println("消息解析失败")
 			} else {
-				if logType == 0 {
+				if LogType == 0 {
 					log.Println("消息体内容为:", ret)
 				}
 				r.roomID = ret.RoomID
 				for i := 0; i < r.roomRobotCount-1; i++ {
-					_ = CreateRobot(r.roomID, r.add)
+					CreateRobotFollowRoom(r.roomID, r.add)
 				}
 			}
 			r.isRoomOwnner = true
@@ -113,7 +113,7 @@ func (r *Robot) unpacket(buf []byte) {
 				} else if ret.Op == 1 {
 					r.roomPlayerCount--
 				}
-				if logType == 0 {
+				if LogType == 0 {
 					log.Println("xxxxxxxxxx roomId:", r.roomID, "count:", r.roomPlayerCount)
 				}
 
