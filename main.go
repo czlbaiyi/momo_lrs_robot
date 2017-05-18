@@ -79,9 +79,6 @@ func readStartPram() {
 				log.Fatalln("robotNum 解析失败 ", err)
 			}
 
-			if roomCount < roomStartGameRobotCount {
-				log.Fatalln("房间人数不可以比开房间需要的人数少 ", err)
-			}
 			log.Println("压力测试", "add:", add, "roomCount", roomCount, "robotNum", robotNum)
 		} else {
 			log.Fatalln(`启动参数错误 请检查`)
